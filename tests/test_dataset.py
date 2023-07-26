@@ -16,4 +16,4 @@ def test_dataset():
     images, labels = next(iter(dataloader))
 
     assert images.shape == torch.Size([2, 3, 224, 224])
-    assert labels.shape == torch.Size([2, 1])
+    assert labels.shape == torch.Size([2])
