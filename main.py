@@ -28,13 +28,14 @@ def train(model, device, train_loader, optimizer, epoch):
 
 class PlantSeedlingDataset(Dataset):
 
-    def __init__(self, data_root, transforms):
+    def __init__(self, data_root, transforms, stage):
         super().__init__()
         self.image_paths = []
         self.labels = []
         self.label_to_index = {}
         self.index_to_label = {}
-        data_root = Path(data_root)
+
+        data_root = Path(data_root) / stage
         for folder in data_root.iterdir():
             if folder.is_dir():
                 label = folder.name
