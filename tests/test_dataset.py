@@ -1,4 +1,5 @@
 import torch
+from torch.utils.data import DataLoader
 
 from main import PlantSeedlingDataset
 from torchvision.transforms import transforms as T
@@ -11,7 +12,8 @@ def test_dataset():
         T.ToTensor(),
     ])
     dataset = PlantSeedlingDataset(data_root, transforms)
-    image, label = dataset[0]
+    dataloader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=8)
+    images, labels = next(iter(dataloader))
 
-    assert image.shape == torch.Size([3, 224, 224])
-    assert label.shape == torch.Size([1])
+    assert images.shape == torch.Size([2, 3, 224, 224])
+    assert labels.shape == torch.Size([2, 1])
