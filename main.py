@@ -50,9 +50,8 @@ class PlantSeedlingDataset(Dataset):
                             self.image_paths.append(file)
                             self.labels.append(index)
             elif stage == 'test':
-                for file in folder.iterdir():
-                    if file.is_file():
-                        self.image_paths.append(file)
+                if folder.is_file():
+                    self.image_paths.append(folder)
 
         self.transforms = transforms
 
