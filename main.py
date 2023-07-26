@@ -43,8 +43,9 @@ class PlantSeedlingDataset(Dataset):
                 self.index_to_label[index] = label
 
                 for file in folder.iterdir():
-                    self.image_paths.append(file)
-                    self.labels.append(index)
+                    if file.is_file():
+                        self.image_paths.append(file)
+                        self.labels.append(index)
 
         self.transforms = transforms
 
