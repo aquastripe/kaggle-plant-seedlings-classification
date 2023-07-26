@@ -11,7 +11,7 @@ def test_dataset():
         T.ToTensor(),
     ])
     dataset = PlantSeedlingDataset(data_root, transforms)
-    image, label = dataset
+    image, label = dataset[0]
 
     assert image.shape == torch.Size([3, 224, 224])
     assert label.shape == torch.Size([1])
