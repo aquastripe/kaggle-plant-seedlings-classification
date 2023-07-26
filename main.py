@@ -34,19 +34,25 @@ class PlantSeedlingDataset(Dataset):
         self.labels = []
         self.label_to_index = {}
         self.index_to_label = {}
+        self.stage = stage
 
         data_root = Path(data_root) / stage
         for folder in data_root.iterdir():
-            if folder.is_dir():
-                label = folder.name
-                index = len(self.label_to_index)
-                self.label_to_index[label] = index
-                self.index_to_label[index] = label
+            if stage == 'train':
+                if folder.is_dir():
+                    label = folder.name
+                    index = len(self.label_to_index)
+                    self.label_to_index[label] = index
+                    self.index_to_label[index] = label
 
+                    for file in folder.iterdir():
+                        if file.is_file():
+                            self.image_paths.append(file)
+                            self.labels.append(index)
+            elif stage == 'test':
                 for file in folder.iterdir():
                     if file.is_file():
                         self.image_paths.append(file)
-                        self.labels.append(index)
 
         self.transforms = transforms
 
@@ -55,7 +61,10 @@ class PlantSeedlingDataset(Dataset):
             if self.transforms:
                 image = self.transforms(image)
 
-        return image, self.labels[index]
+        if self.stage == 'train':
+            return image, self.labels[index]
+        elif self.stage == 'test':
+            return image
 
     def __len__(self):
         return len(self.image_paths)
