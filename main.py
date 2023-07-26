@@ -37,21 +37,21 @@ class PlantSeedlingDataset(Dataset):
         self.stage = stage
 
         data_root = Path(data_root) / stage
-        for folder in data_root.iterdir():
+        for item in data_root.iterdir():
             if stage == 'train':
-                if folder.is_dir():
-                    label = folder.name
+                if item.is_dir():
+                    label = item.name
                     index = len(self.label_to_index)
                     self.label_to_index[label] = index
                     self.index_to_label[index] = label
 
-                    for file in folder.iterdir():
-                        if file.is_file():
-                            self.image_paths.append(file)
+                    for sub_item in item.iterdir():
+                        if sub_item.is_file():
+                            self.image_paths.append(sub_item)
                             self.labels.append(index)
             elif stage == 'test':
-                if folder.is_file():
-                    self.image_paths.append(folder)
+                if item.is_file():
+                    self.image_paths.append(item)
 
         self.transforms = transforms
 
