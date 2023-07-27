@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from main import PlantSeedlingDataset
+from main import PlantSeedlingsDataset
 from torchvision.transforms import transforms as T
 
 
@@ -12,7 +12,7 @@ def test_train_set():
         T.Resize([224, 224]),
         T.ToTensor(),
     ])
-    dataset = PlantSeedlingDataset(data_root, transforms, stage='train')
+    dataset = PlantSeedlingsDataset(data_root, transforms, stage='train')
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=8)
     images, labels = next(iter(dataloader))
 
@@ -26,7 +26,7 @@ def test_test_set():
         T.Resize([224, 224]),
         T.ToTensor(),
     ])
-    dataset = PlantSeedlingDataset(data_root, transforms, stage='test')
+    dataset = PlantSeedlingsDataset(data_root, transforms, stage='test')
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=8)
     images = next(iter(dataloader))
 
@@ -40,5 +40,5 @@ def test_dataset_size():
         T.Resize([224, 224]),
         T.ToTensor(),
     ])
-    dataset = PlantSeedlingDataset(data_root, transforms)
+    dataset = PlantSeedlingsDataset(data_root, transforms)
     assert len(dataset) == ...

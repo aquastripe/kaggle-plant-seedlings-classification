@@ -15,7 +15,7 @@ from torchvision.models import resnet50, ResNet50_Weights
 from tqdm import tqdm
 
 
-class PlantSeedlingDataset(Dataset):
+class PlantSeedlingsDataset(Dataset):
 
     def __init__(self, data_root, transforms, stage, metadata_file):
         super().__init__()
@@ -198,7 +198,7 @@ def main():
     ])
 
     if not args.eval_model:
-        dataset = PlantSeedlingDataset(args.data_root, transforms, 'train', metadata_file)
+        dataset = PlantSeedlingsDataset(args.data_root, transforms, 'train', metadata_file)
         train_set, valid_set = random_split(dataset, [0.8, 0.2])
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
         valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
@@ -213,7 +213,7 @@ def main():
 
     plot_loss_curve(loss, output_folder)
 
-    test_set = PlantSeedlingDataset(args.data_root, transforms, 'test', metadata_file)
+    test_set = PlantSeedlingsDataset(args.data_root, transforms, 'test', metadata_file)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
     files, species = evaluate(model, test_loader, device)
     df = pd.DataFrame({'file': files, 'species': species})
