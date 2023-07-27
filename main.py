@@ -100,7 +100,7 @@ class Model(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.model = resnet50(ResNet50_Weights.DEFAULT)
+        self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.model.fc = nn.Linear(2048, 12)
 
     def forward(self, inputs):
