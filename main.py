@@ -131,6 +131,7 @@ def parse_args():
     parser.add_argument('--data_root', type=str)
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--eval_model', type=str, default=None)
     return parser.parse_args()
 
 
@@ -148,7 +149,7 @@ def evaluate(model, test_loader, device):
             # evaluation, e.g.
             label_indices = outputs.argmax(dim=1)
             files += filenames
-            species += [test_loader.dataset.index_to_label[index.item()] for index in label_indices]
+            species += [test_loader.dataset.index_to_label[str(index.item())] for index in label_indices]
 
     return files, species
 
@@ -162,12 +163,17 @@ def main():
         T.Resize([224, 224]),
         T.ToTensor(),
     ])
-    dataset = PlantSeedlingDataset(args.data_root, transforms, 'train')
-    train_set, valid_set = random_split(dataset, [0.8, 0.2])
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-    valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    train(model, train_loader, valid_loader, optimizer, args.num_epochs, device)
+
+    if not args.eval_model:
+        dataset = PlantSeedlingDataset(args.data_root, transforms, 'train')
+        train_set, valid_set = random_split(dataset, [0.8, 0.2])
+        train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
+        valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
+        optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+        train(model, train_loader, valid_loader, optimizer, args.num_epochs, device)
+    else:
+        weights = torch.load(args.eval_model, map_location=device)
+        model.load_state_dict(weights)
 
     test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
