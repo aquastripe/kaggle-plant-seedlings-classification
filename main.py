@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 import json
 from pathlib import Path
 
@@ -90,7 +91,7 @@ class PlantSeedlingDataset(Dataset):
         if self.stage == 'train':
             return image, self.labels[index]
         elif self.stage == 'test':
-            return image
+            return image, self.image_paths[index].name
 
     def __len__(self):
         return len(self.image_paths)
@@ -116,6 +117,25 @@ def parse_args():
     return parser.parse_args()
 
 
+def evaluate(model, test_loader, device):
+    files = []
+    species = []
+    model.eval()
+    for inputs, filenames in tqdm(test_loader, desc='Testing', ascii=True):
+        inputs = inputs.to(device, non_blocking=True)
+
+        with torch.no_grad():
+            # forward
+            outputs = model(inputs)
+
+            # evaluation, e.g.
+            label_indices = outputs.argmax(dim=1)
+            files += filenames
+            species += [test_loader.dataset.index_to_label[index] for index in label_indices]
+
+    return files, species
+
+
 def main():
     args = parse_args()
     device = torch.device('cuda')
@@ -131,6 +151,12 @@ def main():
     valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     train(model, train_loader, valid_loader, optimizer, args.num_epochs, device)
+
+    test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
+    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
+    files, species = evaluate(model, test_loader, device)
+    df = pd.DataFrame({'file': files, 'species': species})
+    df.to_csv('submission.csv', index=False)
 
 
 if __name__ == '__main__':
