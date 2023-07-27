@@ -9,12 +9,13 @@ from PIL import Image
 from torch import nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision.models import resnet50, ResNet50_Weights
+from tqdm import tqdm
 
 
 def train(model, device, train_loader, optimizer, num_epochs):
     model.train()  # for Dropout, Batch Normalization, etc.
-    for epoch in range(num_epochs):
-        for inputs, targets in train_loader:
+    for epoch in tqdm(range(num_epochs), desc='Training', ascii=True):
+        for inputs, targets in tqdm(train_loader, ascii=True):
             inputs = inputs.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)
 
