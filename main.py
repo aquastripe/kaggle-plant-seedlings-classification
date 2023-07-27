@@ -23,42 +23,48 @@ class PlantSeedlingDataset(Dataset):
         self.labels = []
 
         if stage == 'train':
-            self.label_to_index = {}
-            self.index_to_label = {}
+            self._label_to_index = {}
+            self._index_to_label = []
         elif stage == 'test':
             self._load_metadata(metadata_file)
 
         self.stage = stage
-        self._collect_images_labels(data_root, stage)
+        self._collect_metadata(data_root, stage)
 
         if stage == 'train':
             self._dump_metadata(metadata_file)
 
         self.transforms = transforms
 
+    def to_labels(self, indices):
+        labels = []
+        for index in indices:
+            labels.append(self._index_to_label[index])
+        return labels
+
     def _load_metadata(self, metadata_file):
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
-            self.label_to_index = metadata['label_to_index']
-            self.index_to_label = metadata['index_to_label']
+            self._label_to_index = metadata['label_to_index']
+            self._index_to_label = metadata['index_to_label']
 
     def _dump_metadata(self, metadata_file):
         with open(metadata_file, 'w', encoding='utf-8') as f:
             metadata = {
-                'label_to_index': self.label_to_index,
-                'index_to_label': self.index_to_label,
+                'label_to_index': self._label_to_index,
+                'index_to_label': self._index_to_label,
             }
             json.dump(metadata, f)
 
-    def _collect_images_labels(self, data_root, stage):
+    def _collect_metadata(self, data_root, stage):
         data_root = Path(data_root) / stage
         for item in data_root.iterdir():
             if stage == 'train':
                 if item.is_dir():
                     label = item.name
-                    index = len(self.label_to_index)
-                    self.label_to_index[label] = index
-                    self.index_to_label[index] = label
+                    index = len(self._label_to_index)
+                    self._label_to_index[label] = index
+                    self._index_to_label.append(label)
 
                     for sub_item in item.iterdir():
                         if sub_item.is_file():
@@ -160,6 +166,7 @@ def train(model, train_loader, valid_loader, optimizer, num_epochs, device, outp
 def evaluate(model, test_loader, device):
     files = []
     species = []
+
     model.eval()
     for inputs, filenames in tqdm(test_loader, desc='Testing', ascii=True):
         inputs = inputs.to(device, non_blocking=True)
@@ -168,10 +175,9 @@ def evaluate(model, test_loader, device):
             # forward
             outputs = model(inputs)
 
-            # evaluation, e.g.
             label_indices = outputs.argmax(dim=1)
             files += filenames
-            species += [test_loader.dataset.index_to_label[str(index.item())] for index in label_indices]
+            species += test_loader.dataset.to_labels(label_indices)
 
     return files, species
 
