@@ -1,4 +1,6 @@
 import argparse
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import json
 from pathlib import Path
@@ -12,46 +14,6 @@ from torch import nn as nn
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision.models import resnet50, ResNet50_Weights
 from tqdm import tqdm
-
-
-def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
-    loss_records = {
-        'train': [],
-        'valid': [],
-    }
-    data_loader = {
-        'train': train_loader,
-        'valid': valid_loader,
-    }
-    desc = {
-        'train': 'Training',
-        'valid': 'Validating',
-    }
-    for epoch in tqdm(range(num_epochs), desc='Training Kaggle plant seedling dataset', ascii=True):
-        for stage in ['train', 'valid']:
-            in_training = stage == 'train'
-            with torch.set_grad_enabled(in_training):
-                model.train(in_training)  # for Dropout, Batch Normalization, etc.
-                for inputs, targets in tqdm(data_loader[stage], ascii=True, desc=desc[stage]):
-                    inputs = inputs.to(device, non_blocking=True)
-                    targets = targets.to(device, non_blocking=True)
-
-                    # forward
-                    outputs = model(inputs)
-                    loss = F.cross_entropy(outputs, targets)
-
-                    # backward
-                    if in_training:
-                        optimizer.zero_grad()
-                        loss.backward()
-                        optimizer.step()
-
-                    loss_records[stage].append(loss.item())
-
-        torch.save(model.state_dict(), f'model-{epoch}.pth')
-
-    with open('loss.json', 'w', encoding='utf-8') as f:
-        json.dump(loss_records, f)
 
 
 class PlantSeedlingDataset(Dataset):
@@ -143,6 +105,51 @@ def parse_args():
     return parser.parse_args()
 
 
+def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
+    loss_records = {
+        'train': [],
+        'valid': [],
+    }
+    data_loader = {
+        'train': train_loader,
+        'valid': valid_loader,
+    }
+    desc = {
+        'train': 'Training',
+        'valid': 'Validating',
+    }
+    for epoch in tqdm(range(num_epochs), desc='Training Kaggle plant seedling dataset', ascii=True):
+        for stage in ['train', 'valid']:
+            loss_in_epoch = []
+            in_training = stage == 'train'
+            with torch.set_grad_enabled(in_training):
+                model.train(in_training)  # for Dropout, Batch Normalization, etc.
+                for inputs, targets in tqdm(data_loader[stage], ascii=True, desc=desc[stage]):
+                    inputs = inputs.to(device, non_blocking=True)
+                    targets = targets.to(device, non_blocking=True)
+
+                    # forward
+                    outputs = model(inputs)
+                    loss = F.cross_entropy(outputs, targets)
+
+                    # backward
+                    if in_training:
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+
+                    loss_in_epoch.append(loss.item())
+
+            loss_in_epoch = torch.tensor(loss_in_epoch)
+            loss_in_epoch = loss_in_epoch.mean().item()
+            loss_records[stage].append(loss_in_epoch)
+
+        torch.save(model.state_dict(), f'model-{epoch}.pth')
+
+    with open('loss.json', 'w', encoding='utf-8') as f:
+        json.dump(loss_records, f)
+
+
 def evaluate(model, test_loader, device):
     files = []
     species = []
@@ -182,6 +189,12 @@ def main():
     else:
         weights = torch.load(args.eval_model, map_location=device)
         model.load_state_dict(weights)
+    #
+    # with open('loss.json', 'r') as f:
+    #     loss = json.load(f)
+    #
+    # fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    # ax.plot(range(len(loss['train'])), loss['train'], )
 
     test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
