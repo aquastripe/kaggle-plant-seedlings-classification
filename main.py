@@ -189,12 +189,15 @@ def main():
     else:
         weights = torch.load(args.eval_model, map_location=device)
         model.load_state_dict(weights)
-    #
-    # with open('loss.json', 'r') as f:
-    #     loss = json.load(f)
-    #
-    # fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
-    # ax.plot(range(len(loss['train'])), loss['train'], )
+
+    with open('loss.json', 'r') as f:
+        loss = json.load(f)
+
+    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    ax.plot(range(len(loss['train'])), loss['train'], label='Training')
+    ax.plot(range(len(loss['valid'])), loss['valid'], label='Validation')
+    fig.savefig('loss.png')
+    fig.savefig('loss.pdf')
 
     test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
