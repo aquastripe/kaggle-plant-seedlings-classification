@@ -196,6 +196,7 @@ def main():
     fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
     ax.plot(range(len(loss['train'])), loss['train'], label='Training')
     ax.plot(range(len(loss['valid'])), loss['valid'], label='Validation')
+    ax.legend()
     fig.savefig('loss.png')
     fig.savefig('loss.pdf')
 
