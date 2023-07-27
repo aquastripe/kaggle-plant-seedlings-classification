@@ -66,13 +66,31 @@ class PlantSeedlingDataset(Dataset):
             self.label_to_index = {}
             self.index_to_label = {}
         elif stage == 'test':
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-                self.label_to_index = metadata['label_to_index']
-                self.index_to_label = metadata['index_to_label']
+            self._load_metadata(metadata_file)
 
         self.stage = stage
+        self._collect_images_labels(data_root, stage)
 
+        if stage == 'train':
+            self._dump_metadata(metadata_file)
+
+        self.transforms = transforms
+
+    def _load_metadata(self, metadata_file):
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+            self.label_to_index = metadata['label_to_index']
+            self.index_to_label = metadata['index_to_label']
+
+    def _dump_metadata(self, metadata_file):
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            metadata = {
+                'label_to_index': self.label_to_index,
+                'index_to_label': self.index_to_label,
+            }
+            json.dump(metadata, f)
+
+    def _collect_images_labels(self, data_root, stage):
         data_root = Path(data_root) / stage
         for item in data_root.iterdir():
             if stage == 'train':
@@ -89,16 +107,6 @@ class PlantSeedlingDataset(Dataset):
             elif stage == 'test':
                 if item.is_file():
                     self.image_paths.append(item)
-
-        if stage == 'train':
-            with open(metadata_file, 'w', encoding='utf-8') as f:
-                metadata = {
-                    'label_to_index': self.label_to_index,
-                    'index_to_label': self.index_to_label,
-                }
-                json.dump(metadata, f)
-
-        self.transforms = transforms
 
     def __getitem__(self, index):
         with Image.open(self.image_paths[index]).convert('RGB') as image:
