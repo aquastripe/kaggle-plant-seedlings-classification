@@ -18,36 +18,34 @@ def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
         'train': [],
         'valid': [],
     }
+    data_loader = {
+        'train': train_loader,
+        'valid': valid_loader,
+    }
+    desc = {
+        'train': 'Training',
+        'valid': 'Validating',
+    }
     for epoch in tqdm(range(num_epochs), desc='Training Kaggle plant seedling dataset', ascii=True):
-        with torch.enable_grad():
-            model.train()  # for Dropout, Batch Normalization, etc.
-            for inputs, targets in tqdm(train_loader, ascii=True, desc='Training'):
-                inputs = inputs.to(device, non_blocking=True)
-                targets = targets.to(device, non_blocking=True)
+        for stage in ['train', 'valid']:
+            in_training = stage == 'train'
+            with torch.set_grad_enabled(in_training):
+                model.train(in_training)  # for Dropout, Batch Normalization, etc.
+                for inputs, targets in tqdm(data_loader[stage], ascii=True, desc=desc[stage]):
+                    inputs = inputs.to(device, non_blocking=True)
+                    targets = targets.to(device, non_blocking=True)
 
-                # forward
-                outputs = model(inputs)
-                loss = F.cross_entropy(outputs, targets)
+                    # forward
+                    outputs = model(inputs)
+                    loss = F.cross_entropy(outputs, targets)
 
-                # backward
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                    # backward
+                    if in_training:
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
 
-                loss_records['train'].append(loss.item())
-
-        with torch.no_grad():
-            # validation
-            model.eval()
-            for inputs, targets in tqdm(valid_loader, ascii=True, desc='Validating'):
-                inputs = inputs.to(device, non_blocking=True)
-                targets = targets.to(device, non_blocking=True)
-
-                # forward
-                outputs = model(inputs)
-                loss = F.cross_entropy(outputs, targets)
-
-                loss_records['valid'].append(loss.item())
+                    loss_records[stage].append(loss.item())
 
         torch.save(model.state_dict(), f'model-{epoch}.pth')
 
