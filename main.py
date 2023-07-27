@@ -148,7 +148,7 @@ def evaluate(model, test_loader, device):
             # evaluation, e.g.
             label_indices = outputs.argmax(dim=1)
             files += filenames
-            species += [test_loader.dataset.index_to_label[index] for index in label_indices]
+            species += [test_loader.dataset.index_to_label[index.item()] for index in label_indices]
 
     return files, species
 
