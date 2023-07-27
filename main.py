@@ -112,6 +112,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', type=str)
     parser.add_argument('--num_epochs', type=int, default=10)
+    parser.add_argument('--batch_size', type=int, default=32)
     return parser.parse_args()
 
 
@@ -126,8 +127,8 @@ def main():
     ])
     dataset = PlantSeedlingDataset(args.data_root, transforms, 'train')
     train_set, valid_set = random_split(dataset, [0.8, 0.2])
-    train_loader = DataLoader(train_set, batch_size=32, shuffle=True, num_workers=8, pin_memory=True)
-    valid_loader = DataLoader(valid_set, batch_size=32, shuffle=False, num_workers=8, pin_memory=True)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
+    valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     train(model, train_loader, valid_loader, optimizer, args.num_epochs, device)
 
