@@ -105,6 +105,15 @@ def parse_args():
     return parser.parse_args()
 
 
+def plot_loss_curve(loss):
+    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
+    ax.plot(range(len(loss['train'])), loss['train'], label='Training')
+    ax.plot(range(len(loss['valid'])), loss['valid'], label='Validation')
+    ax.legend()
+    fig.savefig('loss.png')
+    fig.savefig('loss.pdf')
+
+
 def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
     loss_records = {
         'train': [],
@@ -193,12 +202,7 @@ def main():
     with open('loss.json', 'r') as f:
         loss = json.load(f)
 
-    fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
-    ax.plot(range(len(loss['train'])), loss['train'], label='Training')
-    ax.plot(range(len(loss['valid'])), loss['valid'], label='Validation')
-    ax.legend()
-    fig.savefig('loss.png')
-    fig.savefig('loss.pdf')
+    plot_loss_curve(loss)
 
     test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
