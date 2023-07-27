@@ -103,13 +103,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def plot_loss_curve(loss):
+def plot_loss_curve(loss, output_folder):
     fig, ax = plt.subplots()  # type: plt.Figure, plt.Axes
     ax.plot(range(len(loss['train'])), loss['train'], label='Training')
     ax.plot(range(len(loss['valid'])), loss['valid'], label='Validation')
     ax.legend()
-    fig.savefig('loss.png')
-    fig.savefig('loss.pdf')
+    fig.savefig(output_folder / 'loss.png')
+    fig.savefig(output_folder / 'loss.pdf')
 
 
 def train(model, train_loader, valid_loader, optimizer, num_epochs, device, output_folder):
@@ -205,7 +205,7 @@ def main():
     with open(output_folder / 'loss.json', 'r') as f:
         loss = json.load(f)
 
-    plot_loss_curve(loss)
+    plot_loss_curve(loss, output_folder)
 
     test_set = PlantSeedlingDataset(args.data_root, transforms, 'test', metadata_file)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
