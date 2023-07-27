@@ -17,12 +17,11 @@ from tqdm import tqdm
 
 class PlantSeedlingDataset(Dataset):
 
-    def __init__(self, data_root, transforms, stage):
+    def __init__(self, data_root, transforms, stage, metadata_file):
         super().__init__()
         self.image_paths = []
         self.labels = []
 
-        metadata_file = 'metadata.json'
         if stage == 'train':
             self.label_to_index = {}
             self.index_to_label = {}
@@ -113,7 +112,7 @@ def plot_loss_curve(loss):
     fig.savefig('loss.pdf')
 
 
-def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
+def train(model, train_loader, valid_loader, optimizer, num_epochs, device, output_folder):
     loss_records = {
         'train': [],
         'valid': [],
@@ -152,9 +151,9 @@ def train(model, train_loader, valid_loader, optimizer, num_epochs, device):
             loss_in_epoch = loss_in_epoch.mean().item()
             loss_records[stage].append(loss_in_epoch)
 
-        torch.save(model.state_dict(), f'model-{epoch}.pth')
+        torch.save(model.state_dict(), output_folder / f'model-{epoch}.pth')
 
-    with open('loss.json', 'w', encoding='utf-8') as f:
+    with open(output_folder / 'loss.json', 'w', encoding='utf-8') as f:
         json.dump(loss_records, f)
 
 
@@ -179,6 +178,10 @@ def evaluate(model, test_loader, device):
 
 def main():
     args = parse_args()
+    output_folder = Path('output')
+    output_folder.mkdir(exist_ok=True)
+    metadata_file = output_folder / 'metadata.json'
+
     device = torch.device('cuda')
     model = Model()
     model.to(device)
@@ -189,26 +192,26 @@ def main():
     ])
 
     if not args.eval_model:
-        dataset = PlantSeedlingDataset(args.data_root, transforms, 'train')
+        dataset = PlantSeedlingDataset(args.data_root, transforms, 'train', metadata_file)
         train_set, valid_set = random_split(dataset, [0.8, 0.2])
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
         valid_loader = DataLoader(valid_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
         optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-        train(model, train_loader, valid_loader, optimizer, args.num_epochs, device)
+        train(model, train_loader, valid_loader, optimizer, args.num_epochs, device, output_folder)
     else:
         weights = torch.load(args.eval_model, map_location=device)
         model.load_state_dict(weights)
 
-    with open('loss.json', 'r') as f:
+    with open(output_folder / 'loss.json', 'r') as f:
         loss = json.load(f)
 
     plot_loss_curve(loss)
 
-    test_set = PlantSeedlingDataset(args.data_root, transforms, 'test')
+    test_set = PlantSeedlingDataset(args.data_root, transforms, 'test', metadata_file)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
     files, species = evaluate(model, test_loader, device)
     df = pd.DataFrame({'file': files, 'species': species})
-    df.to_csv('submission.csv', index=False)
+    df.to_csv(output_folder / 'submission.csv', index=False)
 
 
 if __name__ == '__main__':
