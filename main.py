@@ -60,8 +60,17 @@ class PlantSeedlingDataset(Dataset):
         super().__init__()
         self.image_paths = []
         self.labels = []
-        self.label_to_index = {}
-        self.index_to_label = {}
+
+        metadata_file = 'metadata.json'
+        if stage == 'train':
+            self.label_to_index = {}
+            self.index_to_label = {}
+        elif stage == 'test':
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+                self.label_to_index = metadata['label_to_index']
+                self.index_to_label = metadata['index_to_label']
+
         self.stage = stage
 
         data_root = Path(data_root) / stage
@@ -80,6 +89,14 @@ class PlantSeedlingDataset(Dataset):
             elif stage == 'test':
                 if item.is_file():
                     self.image_paths.append(item)
+
+        if stage == 'train':
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                metadata = {
+                    'label_to_index': self.label_to_index,
+                    'index_to_label': self.index_to_label,
+                }
+                json.dump(metadata, f)
 
         self.transforms = transforms
 
