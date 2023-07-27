@@ -16,7 +16,7 @@ def train(model, device, train_loader, optimizer, num_epochs):
     for epoch in range(num_epochs):
         for inputs, targets in train_loader:
             inputs = inputs.to(device, non_blocking=True)
-            target = target.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)
 
             # forward
             outputs = model(inputs)
