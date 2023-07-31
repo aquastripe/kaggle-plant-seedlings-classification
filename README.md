@@ -1,17 +1,7 @@
 # Kaggle Plant Seedlings Classification
 
-## Test Accuracy
-
-- private test accuracy: 0.95465
-- public test accuracy: 0.95465
-
-## Loss Curve
-
-![](outputs/loss.png)
-
-# Kaggle Plant Seedlings Classification Example
-
-A PyTorch example of the playground competition: https://www.kaggle.com/competitions/plant-seedlings-classification
+A PyTorch example of the playground competition: 
+https://www.kaggle.com/competitions/plant-seedlings-classification
 
 Coding video: https://youtu.be/wk607MVBuno
 
@@ -32,3 +22,13 @@ ARGUMENTS:
 * `--num_epochs`: `int` number of epochs
 * `--batch_size`: `int` batch size
 * `--eval_model`: `str` path to the model to be evaluated.
+
+
+## Test Accuracy
+
+- private test accuracy: 0.95465
+- public test accuracy: 0.95465
+
+## Loss Curve
+
+![](outputs/loss.png)
